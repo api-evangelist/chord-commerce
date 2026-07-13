@@ -2,19 +2,14 @@
   "repo": "chord-commerce",
   "feeds": [
     {
-      "source": "https://www.chordcommerce.com/resources/insights",
-      "feed_url": "",
-      "saved": 0,
-      "method": "agent-scrape"
-    },
-    {
       "source": "https://chord.launchnotes.io",
-      "feed_url": "",
-      "saved": 1,
-      "method": "agent-scrape"
+      "feed_url": "https://chord.launchnotes.io",
+      "title": "",
+      "saved": 0,
+      "method": "none"
     }
   ],
-  "post_count": 1,
-  "fetched": "2026-06-27T12:32:40Z",
-  "agent_pulled": "2026-06-27"
+  "post_count": 2,
+  "fetched": "2026-07-11T11:50:51Z",
+  "agent_pulled": "2026-07-04"
 }
