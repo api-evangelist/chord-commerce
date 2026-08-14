@@ -70,9 +70,89 @@ tags:
   - Direct To Consumer
 url: https://raw.githubusercontent.com/api-evangelist/chord-commerce/refs/heads/main/apis.yml
 created: '2026-05-25'
-modified: '2026-05-25'
+modified: '2026-08-13'
 specificationVersion: '0.20'
-apis: []
+apis:
+  - name: Chord MCP
+    description: >-
+      Chord's hosted Model Context Protocol server — a remote, OAuth-protected,
+      read-only window into a customer's Chord data warehouse. Fourteen
+      documented tools cover schema search, saved views, prior question/SQL
+      pairs, org SQL conventions, table preview, read-only SQL execution,
+      activation/sync health, and multi-tenant routing across the Chord
+      organizations the authenticated user belongs to. Registered in Claude via
+      Custom Connectors, via Chord's own Claude Code plugin, or through the
+      mcp-remote bridge; tools/list is auth-gated behind OAuth 2.1 with PKCE and
+      dynamic client registration against Chord's Stytch-backed authorization
+      server.
+    humanURL: https://docs.chord.co/chord-mcp
+    baseURL: https://mcp.chord.co/mcp
+    tags:
+      - MCP
+      - AI Agents
+      - Commerce Analytics
+      - Data Warehouse
+    properties:
+      - type: MCPServer
+        url: mcp/chord-commerce-mcp.yml
+      - type: Documentation
+        url: https://docs.chord.co/chord-mcp
+      - type: OAuthScopes
+        url: scopes/chord-commerce-scopes.yml
+      - type: WellKnown
+        url: well-known/chord-commerce-well-known.yml
+      - type: SourceCode
+        url: https://github.com/chordcommerce/chord-copilot
+  - name: Chord CDP Ingest API
+    description: >-
+      The HTTP ingest surface of the Chord customer data platform. Backend
+      systems POST track and identify events to /api/track and /api/identify,
+      authenticated with a per-source write key (X-Write-Key header preferred).
+      Chord publishes a full canonical event catalog — order, shipment,
+      subscription and user server events plus a browser tracking plan — and
+      documents its delivery semantics unusually thoroughly: at-least-once
+      delivery, a stable messageId carried end to end, exponential-backoff
+      retries and a dead-letter queue. Ingest is deliberately permissive: the
+      tracking plan is a convention, not a schema validator, and custom events
+      pass through unmodified.
+    humanURL: https://docs.chord.co/server-events-overview
+    baseURL: https://production.cdp.ingest.chord.co
+    tags:
+      - Event Tracking
+      - CDP
+      - Customer Data Platform
+      - Events
+    properties:
+      - type: Documentation
+        url: https://docs.chord.co/server-events-overview
+      - type: Webhooks
+        url: asyncapi/chord-commerce-events.yml
+      - type: Authentication
+        url: authentication/chord-commerce-authentication.yml
+      - type: ErrorCatalog
+        url: errors/chord-commerce-error-codes.yml
+  - name: Chord Audiences API
+    description: >-
+      Read API for activated audiences. Once the Dynamic Audiences API
+      destination is enabled on an account, a sync mirrors a custom audience into
+      the API and a server-side GET on /audiences returns that user's audience
+      memberships with their attached attributes. Keyed by the CDP Blended User
+      ID passed in the Chord-User-Id header and authenticated with a bearer token
+      issued by Chord. Intended for on-site personalization; Chord's docs state
+      it must always be called server-side.
+    humanURL: https://docs.chord.co/audiences-api
+    baseURL: https://analytics.api.chord.co
+    tags:
+      - Audiences
+      - Personalization
+      - CDP
+    properties:
+      - type: Documentation
+        url: https://docs.chord.co/audiences-api
+      - type: Authentication
+        url: authentication/chord-commerce-authentication.yml
+      - type: ErrorCatalog
+        url: errors/chord-commerce-error-codes.yml
 common:
   - type: DomainSecurity
     url: security/chord-commerce-domain-security.yml
@@ -81,17 +161,19 @@ common:
   - type: Platform
     url: https://www.chordcommerce.com/platform
   - type: AI
-    url: https://www.chordcommerce.com/chord-ai
+    url: https://www.chordcommerce.com/platform/agents
   - type: CDP
-    url: https://www.chordcommerce.com/chord-cdp
-  - type: OMS
-    url: https://www.chordcommerce.com/chord-oms
+    url: https://www.chordcommerce.com/platform/data-foundation
+  - type: ContextLayer
+    url: https://www.chordcommerce.com/platform/context-layer
   - type: Documentation
     url: https://docs.chord.co
   - type: OMSDocumentation
     url: https://docs.chord.co/oms
   - type: APIReference
-    url: https://chord.stoplight.io/docs/chord-oms
+    url: https://docs.chord.co/sdk-api-reference
+  - type: GettingStarted
+    url: https://docs.chord.co/analytics-developer-docs
   - type: EventTracking
     url: https://docs.chord.co/chord-event-tracking
   - type: DataPlatform
@@ -100,17 +182,73 @@ common:
     url: https://docs.chord.co/chord-copilot-chat
   - type: AnthropicIntegration
     url: https://docs.chord.co/chord-ai-models-powered-by-anthropic
+  - type: MCPServer
+    url: mcp/chord-commerce-mcp.yml
+  - type: AgentSkill
+    url: skills/_index.yml
+  - type: LLMsTxt
+    url: llms/chord-commerce-llms.txt
+  - type: Packages
+    url: packages/chord-commerce-packages.yml
+  - type: SDKs
+    url: packages/chord-commerce-packages.yml
+  - type: Authentication
+    url: authentication/chord-commerce-authentication.yml
+  - type: OAuthScopes
+    url: scopes/chord-commerce-scopes.yml
+  - type: WellKnown
+    url: well-known/chord-commerce-well-known.yml
+  - type: Conventions
+    url: conventions/chord-commerce-conventions.yml
+  - type: ErrorCatalog
+    url: errors/chord-commerce-error-codes.yml
+  - type: Conformance
+    url: conformance/chord-commerce-conformance.yml
+  - type: Lifecycle
+    url: lifecycle/chord-commerce-lifecycle.yml
+  - type: StatusPage
+    url: https://status.chord.co
+  - type: ChangeLog
+    url: changelog/chord-commerce-changelog.yml
   - type: ReleaseNotes
     url: https://chord.launchnotes.io
+  - type: Webhooks
+    url: asyncapi/chord-commerce-events.yml
+  - type: Components
+    url: components/chord-commerce-components.yml
+  - type: DataModel
+    url: data-model/chord-commerce-data-model.yml
+  - type: Plans
+    url: plans/chord-commerce-plans-pricing.yml
+  - type: RateLimits
+    url: rate-limits/chord-commerce-rate-limits.yml
   - type: Blog
-    url: https://www.chordcommerce.com/blog
+    url: https://www.chordcommerce.com/resources/insights
   - type: CaseStudies
-    url: https://www.chordcommerce.com/case-studies
+    url: https://www.chordcommerce.com/resources/case-studies
+  - type: Integrations
+    url: https://www.chordcommerce.com/integrations
   - type: About
     url: https://www.chordcommerce.com/about
+  - type: Support
+    url: https://www.chordcommerce.com/faq
+  - type: Pricing
+    url: https://www.chordcommerce.com/request-a-demo
   - type: Demo
-    url: https://www.chordcommerce.com/pricing
-  - type: GitHub
+    url: https://www.chordcommerce.com/request-a-demo
+  - type: Login
+    url: https://hub.chord.co/login
+  - type: TermsOfService
+    url: https://www.chordcommerce.com/legal/terms-of-service
+  - type: PrivacyPolicy
+    url: https://www.chordcommerce.com/legal/privacy-policy
+  - type: SecurityMeasures
+    url: https://www.chordcommerce.com/legal/security-measures
+  - type: DataProcessingAddendum
+    url: https://www.chordcommerce.com/legal/data-processing-addendum
+  - type: Subprocessors
+    url: https://www.chordcommerce.com/legal/subprocessors
+  - type: GitHubOrganization
     url: https://github.com/chordcommerce
   - type: LinkedIn
     url: https://www.linkedin.com/company/chordcommerce
@@ -119,3 +257,8 @@ common:
 maintainers:
   - FN: Kin Lane
     email: kin@apievangelist.com
+x-enrichment:
+  date: '2026-08-13'
+  status: enriched
+  artifacts_added: 24
+  pass: local-v1
