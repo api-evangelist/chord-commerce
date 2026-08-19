@@ -1,0 +1,97 @@
+generated: '2026-08-13'
+method: searched
+source: https://chord.launchnotes.io
+docs: https://chord.launchnotes.io
+platform: LaunchNotes
+note: >-
+  Chord publishes a dated, publicly readable product changelog on LaunchNotes,
+  archived monthly back to November 2021. It is a PRODUCT changelog, not an API
+  changelog — entries describe platform and Chord AI behaviour, and no entry in
+  the recent window names an endpoint, a schema change, or a breaking API change.
+  There is no RSS/Atom feed (both /rss and /feed.rss return 404) and the page is
+  JS-rendered, so the entries below are transcribed from the rendered index on
+  2026-08-13 rather than parsed from a feed. A separate SDK changelog for
+  @chordcommerce/analytics is kept at docs.chord.co/chordcommerceanalytics.
+scheme: dated-release-notes
+cadence: fortnightly, plus ad-hoc feature announcements
+current_version: null
+archive_starts: '2021-11'
+breaking_change_policy: null
+entries:
+  - date: '2026-08-06'
+    title: "Naming updates: Copilot is now 'Ask Chord'"
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Chord is retiring the "Copilot" product name across the platform in favour of "Ask Chord".
+    note: >-
+      A rename, announced with no cutover date and no mapping for any API- or
+      MCP-visible identifier. The MCP server, its plugin and its skills are still
+      named chord-copilot.
+  - date: '2026-07-28'
+    title: 'Release Notes: July 14–27, 2026'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Chord AI can build audiences directly from a conversation.
+      - Chord AI names generated audiences automatically.
+      - Conversations resume where the user left off.
+  - date: '2026-07-15'
+    title: 'Release Notes: June 30 – July 13, 2026'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Answers rendered to be easier to read and to show their grounding.
+      - Answers grounded in the customer's own business definitions.
+  - date: '2026-07-01'
+    title: 'Release Notes: June 16 – 29, 2026'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Next-generation Chord Copilot with persistent chat history.
+      - Shareable conversations.
+      - Answers that show their working.
+  - date: '2026-06-26'
+    title: A first look at Copilot Next
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Copilot rebuilt from the ground up, previewed to a small group of customers.
+  - date: '2026-06-16'
+    title: 'June 2 – June 15, 2026 Chord Release Notes'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Copilot detects positive/negative feedback in messages in the background.
+  - date: '2026-06-02'
+    title: 'Chord Release Notes: May 20 – June 1, 2026'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Users can react to individual answers, turning Chord AI into a feedback loop.
+  - date: '2026-05-20'
+    title: 'Chord Release Notes: May 6 – May 19, 2026'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Chord AI feedback memory.
+      - Live documentation grounding.
+      - Smarter date handling.
+      - Several CDP updates.
+  - date: '2026-05-05'
+    title: 'April 22 – May 5 release: Copilot upgrades and more'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - Enriched Context rolled out to make Copilot more accurate.
+  - date: '2026-04-21'
+    title: 'Chord Updates — April 8–21, 2026'
+    category: Feature Announcements
+    breaking: false
+    highlights:
+      - AI performance updates.
+      - Searchable, sortable tables across the platform.
+gaps:
+  - No machine-readable feed (RSS/Atom/JSON) for the changelog.
+  - No entry classifies itself as breaking vs additive.
+  - No API-level changelog — endpoint, payload and schema changes are not tracked publicly.

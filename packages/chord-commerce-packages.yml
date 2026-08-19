@@ -1,0 +1,105 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  registry.npmjs.org, rubygems.org/api/v1, docs.chord.co/analytics-developer-docs,
+  github.com/chordcommerce
+note: >-
+  Chord ships exactly one first-party client library on a public registry:
+  @chordcommerce/analytics, the browser event-tracking SDK. It is actively
+  maintained (v1.23.1, 2026-08-10). Everything else in the chordcommerce GitHub
+  org is either a FORK of an upstream Solidus/Jitsu/Segment project — the gems
+  (solidus_subscriptions, solidus_virtual_gift_card, solidus_importer,
+  solidus_stripe, solidus_braintree, solidus_avatax_certified) are published by
+  solidusio / nebulab, NOT by Chord, so they are recorded as forks and not
+  claimed as Chord packages — or an archived internal repo. There is no Python,
+  Ruby, Go, Java, .NET, PHP or Rust client for any Chord API.
+packages:
+  - language: javascript
+    registry: npm
+    name: '@chordcommerce/analytics'
+    url: https://www.npmjs.com/package/@chordcommerce/analytics
+    install: npm install @chordcommerce/analytics
+    official: true
+    version: 1.23.1
+    published: '2026-08-10'
+    description: Chord Commerce event tracking
+    docs: https://docs.chord.co/analytics-developer-docs
+    api_reference: https://docs.chord.co/sdk-api-reference
+    changelog: https://docs.chord.co/chordcommerceanalytics
+    note: >-
+      Browser SDK. Wraps a CDP tracking library (Segment analytics.js is the only
+      supported host) and emits Chord's canonical tracking-plan events. Exposes
+      window.chord once loaded. Registry metadata read from
+      registry.npmjs.org/@chordcommerce%2Fanalytics on 2026-08-13.
+  - language: javascript
+    registry: cdn
+    name: analytics-liquid-identifiers
+    url: https://cdn.chord.co/analytics-liquid-identifiers/v1/analytics-liquid-identifiers.min.js
+    official: true
+    version: null
+    published: null
+    note: >-
+      CDN-distributed browser script used in Shopify Liquid themes to persist
+      browser identifiers onto the cart/order so server events can be joined to
+      front-end sessions. The URL pins only a MAJOR line (/v1/), not a release,
+      so it floats to whatever Chord last published — a consumer cannot tell what
+      build they are loading, and neither can this pipeline. No npm/jsDelivr/unpkg
+      metadata endpoint exists for it. version: null is a checked gap, not an
+      unchecked field.
+forks_not_first_party:
+  - name: solidus_subscriptions
+    registry: rubygems
+    gem_owner: solidusio
+    upstream: https://github.com/solidusio/solidus_subscriptions
+    chord_fork: https://github.com/chordcommerce/solidus_subscriptions
+    version: 2.0.2
+    note: Chord maintains a fork for its Solidus-based OMS; the published gem is not Chord's.
+  - name: solidus_virtual_gift_card
+    registry: rubygems
+    upstream: https://solidus.io
+    chord_fork: https://github.com/chordcommerce/solidus_virtual_gift_card
+    version: 1.3.0
+  - name: solidus_importer
+    registry: rubygems
+    gem_owner: nebulab
+    upstream: https://github.com/nebulab/solidus_importer
+    chord_fork: https://github.com/chordcommerce/solidus_importer
+    version: 0.2.0
+  - name: solidus_stripe
+    registry: rubygems
+    upstream: https://github.com/solidusio/solidus_stripe
+    chord_fork: https://github.com/chordcommerce/solidus_stripe
+    version: null
+    note: Chord's fork is archived (last push 2022-11-24).
+  - name: solidus_braintree
+    registry: rubygems
+    upstream: https://github.com/solidusio/solidus_paypal_braintree
+    chord_fork: https://github.com/chordcommerce/solidus_braintree
+    version: null
+  - name: jitsu
+    registry: npm
+    upstream: https://github.com/jitsucom/jitsu
+    chord_fork: https://github.com/chordcommerce/jitsu-public
+    version: null
+    note: >-
+      Archived fork of the open-source CDP engine Chord's ingest pipeline is built
+      on (the docs still name Rotor, UDFs and @jitsu/mapping-engine).
+registry_checks:
+  - registry: npm
+    query: '@chordcommerce scope search'
+    result: 1 package (@chordcommerce/analytics)
+  - registry: rubygems
+    query: /api/v1/owners/chordcommerce/gems.json
+    result: 'Owner could not be found — Chord publishes no gems under its own name'
+  - registry: pypi
+    result: none
+  - registry: maven-central
+    result: none
+  - registry: nuget
+    result: none
+  - registry: pkg.go.dev
+    result: none
+  - registry: packagist
+    result: none
+  - registry: crates.io
+    result: none

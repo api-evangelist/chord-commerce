@@ -1,0 +1,62 @@
+generated: '2026-08-13'
+method: probed
+source: >-
+  https://mcp.chord.co/.well-known/oauth-protected-resource and
+  https://mcp.chord.co/.well-known/oauth-authorization-server
+docs: https://docs.chord.co/chord-mcp
+note: >-
+  Chord publishes no OpenAPI, so derive-oauth-scopes.py had no securitySchemes to
+  read. These scopes are taken verbatim from the two live OAuth discovery
+  documents Chord's MCP host serves. They are OIDC identity scopes only — Chord
+  publishes NO resource/permission scopes (nothing like read:orders or
+  write:audiences). Authorization inside the MCP server is decided by the
+  authenticated user's Chord organization membership and by the server's own
+  read-only constraint, not by scope.
+api: Chord MCP
+resource: https://mcp.chord.co/mcp
+authorization_server: https://api.stytch.chord.co
+scopes:
+  - name: openid
+    description: OIDC — issue an ID token for the authenticated Chord user.
+    advertised_by:
+      - oauth-protected-resource
+      - oauth-authorization-server
+  - name: profile
+    description: OIDC — basic profile claims for the Chord user.
+    advertised_by:
+      - oauth-protected-resource
+      - oauth-authorization-server
+  - name: email
+    description: OIDC — the Chord user's email address.
+    advertised_by:
+      - oauth-protected-resource
+      - oauth-authorization-server
+  - name: offline_access
+    description: Issue a refresh token so the MCP client can reconnect without re-consent.
+    advertised_by:
+      - oauth-protected-resource
+      - oauth-authorization-server
+  - name: phone
+    description: OIDC — phone claim.
+    advertised_by:
+      - oauth-authorization-server
+    note: >-
+      Advertised by the authorization server but NOT listed in the MCP
+      protected-resource metadata, so it is not requestable for the MCP resource.
+effective_authorization:
+  model: tenant-membership
+  description: >-
+    Every MCP tool targets the CURRENT tenant's warehouse. The set of tenants a
+    token can reach is the set of Chord organizations the authenticated user
+    belongs to; switch_tenant is rejected for any org the user is not a member of.
+  enforcement:
+    - read-only — execute_sql accepts SELECT/UNION/INTERSECT/EXCEPT only
+    - execute_sql capped at 10000 rows; preview_table capped at 100 rows
+  source: https://github.com/chordcommerce/chord-copilot/blob/main/plugin/skills/copilot/SKILL.md
+other_surfaces:
+  - api: Chord Audiences API
+    scopes: none
+    note: Flat bearer token; no scope model documented.
+  - api: Chord CDP Ingest API
+    scopes: none
+    note: Per-source write key; no scope model documented.

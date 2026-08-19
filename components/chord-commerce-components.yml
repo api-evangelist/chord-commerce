@@ -1,0 +1,88 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.chord.co/analytics-developer-docs, https://docs.chord.co/sdk-api-reference,
+  https://docs.chord.co/tag, https://docs.chord.co/consent-management,
+  https://docs.chord.co/shopify-server-event-tracking
+note: >-
+  Chord ships no visual UI component library — there are no web components, no
+  element/embed library, no prebuilt checkout or dashboard surface a customer can
+  drop into their storefront. What it ships client-side is an INSTRUMENTATION
+  layer: a browser SDK that installs a global, a CDN identifier script for Liquid
+  themes, a Shopify Web Pixel extension, and a device-mode Tag destination that
+  executes customer-supplied browser code on every event. Recorded here because
+  each is a distinct client-side surface a developer installs, and none of them
+  is an SDK in the packages/ sense.
+families:
+  - family: browser-instrumentation
+    components:
+      - name: ChordAnalytics
+        type: javascript-global
+        loader: '@chordcommerce/analytics'
+        install: npm install @chordcommerce/analytics
+        global: window.chord
+        description: >-
+          Instantiated with `new ChordAnalytics(options)`; exposes the tracking
+          plan as typed methods (page, identify, reset, trackProductViewed,
+          trackProductAdded, trackCartViewed, trackCheckoutStarted, …) and
+          forwards to the host CDP library.
+        requires: >-
+          A CDP JavaScript library must already be on the page. Segment's
+          analytics.js is the only supported host — Chord's SDK is a formatter and
+          emitter on top of it, not a standalone collector.
+        options:
+          - cdp (required) — reference to the CDP library
+          - metadata (required) — i18n, ownership (omsId/storeId/tenantId), platform, store
+          - formatters (required) — object formatters; event formatters optional
+          - debug (default false) — validate events against the tracking plan and log errors
+          - enableLogging (default true)
+          - stripNull (default true)
+        docs: https://docs.chord.co/analytics-developer-docs
+        reference: https://docs.chord.co/sdk-api-reference
+      - name: analytics-liquid-identifiers
+        type: cdn-script
+        url: https://cdn.chord.co/analytics-liquid-identifiers/v1/analytics-liquid-identifiers.min.js
+        description: >-
+          Drop-in script for Shopify Liquid themes that persists browser
+          identifiers onto the cart/order so Chord's server-event source can join
+          server events to the originating front-end session.
+        versioning: >-
+          Path pins a major line (/v1/) only — the build a storefront actually
+          loads is whatever Chord last published.
+        docs: https://docs.chord.co/unifying-data-across-sources
+  - family: platform-extensions
+    components:
+      - name: Chord Shopify Web Pixel
+        type: shopify-web-pixel-extension
+        description: >-
+          Shopify's sandboxed pixel surface, used as the front-end collector on
+          Shopify storefronts in place of installing @chordcommerce/analytics
+          directly.
+        docs: https://docs.chord.co/shopify-server-event-tracking
+  - family: cdp-destinations-device-mode
+    components:
+      - name: Tag
+        type: device-mode-destination
+        description: >-
+          Runs customer-supplied JavaScript or HTML in the browser every time a
+          Chord CDP event fires. JavaScript mode exposes the full event as a local
+          `const event`; there is no server-side component. Used for third-party
+          pixels that have no built-in Chord destination.
+        credentials_required: false
+        docs: https://docs.chord.co/tag
+  - family: consent
+    components:
+      - name: consent-manager
+        type: javascript-library
+        repo: https://github.com/chordcommerce/consent-manager
+        description: Drop-in consent management plugin for analytics.js.
+        status: archived
+        last_push: '2022-11-07'
+        published_to_registry: false
+        note: >-
+          Archived and never published to npm. Current consent guidance points at
+          OneTrust and the Shopify Customer Privacy API instead.
+        docs: https://docs.chord.co/consent-management
+ui_component_library: false
+embedded_dashboard: false
+hosted_checkout: false

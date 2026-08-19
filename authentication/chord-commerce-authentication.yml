@@ -1,0 +1,110 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.chord.co/server-events-overview, https://docs.chord.co/audiences-api,
+  https://docs.chord.co/chord-mcp, https://mcp.chord.co/.well-known/oauth-protected-resource,
+  https://api.stytch.chord.co/.well-known/openid-configuration
+note: >-
+  Chord publishes no OpenAPI, so this profile is transcribed from the docs and
+  from live probes of the OAuth/OIDC discovery documents rather than derived from
+  securitySchemes. Three distinct API surfaces, three different auth models — an
+  agent cannot assume one credential works across them.
+schemes:
+  - id: mcp-oauth
+    api: Chord MCP
+    type: oauth2
+    flow: authorization_code
+    pkce_methods:
+      - S256
+    dynamic_client_registration: true
+    issuer: https://api.stytch.chord.co
+    authorization_endpoint: https://hub-backend.chord.co/oauth/authorize
+    token_endpoint: https://api.stytch.chord.co/v1/oauth2/token
+    registration_endpoint: https://api.stytch.chord.co/v1/oauth2/register
+    userinfo_endpoint: https://api.stytch.chord.co/v1/oauth2/userinfo
+    jwks_uri: https://api.stytch.chord.co/.well-known/jwks.json
+    grant_types:
+      - authorization_code
+      - refresh_token
+      - 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+    token_endpoint_auth_methods:
+      - client_secret_basic
+      - client_secret_post
+      - none
+    bearer_methods:
+      - header
+    scopes:
+      - openid
+      - profile
+      - email
+      - offline_access
+    resource: https://mcp.chord.co/mcp
+    challenge: >-
+      401 with WWW-Authenticate: Bearer
+      resource_metadata="https://mcp.chord.co/.well-known/oauth-protected-resource/mcp"
+    docs: https://docs.chord.co/chord-mcp
+    evidence: probed 2026-08-13; both discovery documents returned HTTP 200
+    note: >-
+      Standards-clean MCP auth: RFC 9728 protected-resource metadata, RFC 8414
+      authorization-server metadata, RFC 7591 dynamic client registration, PKCE
+      S256. Chord's docs tell users to leave the optional OAuth Client ID/Secret
+      blank — registration is dynamic. Authorization is per-USER, scoped to the
+      Chord organizations that account belongs to; there is no service account.
+  - id: audiences-bearer
+    api: Chord Audiences API
+    type: http
+    scheme: bearer
+    header: 'Authorization: Bearer <api key>'
+    additional_required_header:
+      name: Chord-User-Id
+      description: >-
+        The unique user identifier used as the `pk` in the customer's audience
+        sync — Chord recommends the CDP Blended User ID. The API returns 401
+        Unauthorized without a valid bearer token.
+    key_issuance: >-
+      Keys are issued by Chord staff on request (help@chord.co or the account
+      executive); there is no self-service key console documented.
+    docs: https://docs.chord.co/audiences-api
+    evidence: >-
+      probed 2026-08-13 — GET https://analytics.api.chord.co/audiences returned
+      HTTP 401 {"message":"Unauthorized"}; the host root returns HTTP 403
+      {"message":"Missing Authentication Token"} (AWS API Gateway default).
+    note: >-
+      Server-side only. Chord's own docs state the Audiences API "should always be
+      called server-side", so the bearer token must never reach a browser.
+  - id: cdp-write-key
+    api: Chord CDP Ingest API
+    type: apiKey
+    in: header
+    name: X-Write-Key
+    alternatives:
+      - in: query
+        name: writekey
+        note: all lowercase
+      - in: body
+        name: writeKey
+        note: capital K
+    preferred: X-Write-Key header
+    docs: https://docs.chord.co/server-events-overview
+    note: >-
+      A per-source write key, the Segment/Jitsu convention. Chord explicitly
+      recommends the header form over the query-string and body forms, both of
+      which are offered only for source systems that cannot set headers — the
+      query-string variant leaks the credential into access logs.
+  - id: platform-saml-sso
+    api: Chord Platform (hub.chord.co)
+    type: saml2
+    idp_documented: Okta
+    docs: https://docs.chord.co/chord-platform-and-okta-sso-integration
+    note: >-
+      SAML 2.0 SSO for human access to the Chord console, set up by Chord support
+      from the customer's IdP metadata. This is console auth, not API auth — no
+      SCIM provisioning endpoint is documented.
+gaps:
+  - No published key-rotation policy for the Audiences API bearer token or the CDP write key.
+  - No self-service credential management surface is documented for any of the three APIs.
+  - No mTLS, no signed-request scheme, no HMAC webhook signature documented.
+  - >-
+    Audiences API and CDP ingest keys are both long-lived shared secrets with no
+    documented scope model; only the MCP surface has scoped, revocable, per-user
+    credentials.

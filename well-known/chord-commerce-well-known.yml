@@ -1,0 +1,119 @@
+generated: '2026-08-13'
+method: probed
+source: live GET of /.well-known/* on every Chord host named in apis.yml and in the docs
+note: >-
+  Chord serves a real /.well-known/ discovery surface, but only on the MCP and
+  auth hosts. The marketing site (chordcommerce.com), the Archbee docs host
+  (docs.chord.co) and the Heroku-fronted app hosts return HTML or empty 404s for
+  every path. The three 200s below are genuine machine-readable documents: the
+  RFC 9728 protected-resource metadata that mcp.chord.co advertises in its
+  WWW-Authenticate challenge, the RFC 8414 authorization-server metadata, and the
+  OIDC discovery document served by Chord's white-labelled Stytch host
+  (api.stytch.chord.co, a Chord-controlled subdomain of chord.co).
+hosts:
+  - host: https://mcp.chord.co
+    documents:
+      - path: /.well-known/oauth-protected-resource
+        status: 200
+        content_type: application/json
+        file: chord-commerce-mcp-oauth-protected-resource.json
+      - path: /.well-known/oauth-protected-resource/mcp
+        status: 200
+        content_type: application/json
+        note: >-
+          The exact resource_metadata URL named in the 401 WWW-Authenticate
+          header returned by POST https://mcp.chord.co/mcp. Body is identical to
+          the parent path, so it is not duplicated on disk.
+      - path: /.well-known/oauth-authorization-server
+        status: 200
+        content_type: application/json
+        file: chord-commerce-mcp-oauth-authorization-server.json
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: https://api.stytch.chord.co
+    note: >-
+      Chord's authorization server, issuer https://api.stytch.chord.co, run on a
+      Chord-controlled subdomain of chord.co (white-labelled Stytch). Named as
+      the sole entry in authorization_servers[] by the MCP protected-resource
+      metadata above, which is how it qualifies as a Chord surface.
+    documents:
+      - path: /.well-known/openid-configuration
+        status: 200
+        content_type: application/json
+        file: chord-commerce-openid-configuration.json
+      - path: /.well-known/jwks.json
+        status: 200
+        note: named as jwks_uri; keys not mirrored here (they rotate)
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: https://www.chordcommerce.com
+    note: Next.js/Vercel marketing site; every /.well-known/* path returns the 404 HTML shell.
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: https://docs.chord.co
+    note: Archbee-hosted docs; every /.well-known/* path returns the 404 HTML shell.
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+      - path: /.well-known/ai-plugin.json
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+  - host: https://hub-backend.chord.co
+    note: Application backend; empty 404 body on every /.well-known/* path.
+    documents:
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/agent-card.json
+        status: 404
+      - path: /.well-known/agent.json
+        status: 404
+security_txt:
+  served: false
+  note: >-
+    No RFC 9116 security.txt on any Chord host. Chord publishes a Security
+    Measures addendum at chordcommerce.com/legal/security-measures, but it names
+    no reporting address, no disclosure policy and no bug bounty, so it is not a
+    vulnerability disclosure surface.
+agent_card:
+  served: false
+  note: >-
+    /.well-known/agent-card.json and the legacy /.well-known/agent.json miss on
+    every host. No A2A artifact is written.

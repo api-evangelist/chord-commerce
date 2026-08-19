@@ -1,0 +1,161 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.chord.co/server-events-overview, https://docs.chord.co/track,
+  https://docs.chord.co/event-deduplication,
+  https://docs.chord.co/error-handling-and-retries,
+  https://docs.chord.co/audiences-api, https://docs.chord.co/chord-mcp
+note: >-
+  Cross-cutting runtime semantics for Chord's three public surfaces. Chord
+  publishes no OpenAPI, so every row below is transcribed from prose docs. The
+  honest headline: Chord's semantics are documented unusually well for the EVENT
+  PIPELINE (delivery guarantee, retry schedule, dead-letter queue, dedup key) and
+  barely at all for the two REST surfaces (no pagination, no rate limits, no
+  error envelope, no versioning).
+auth:
+  style: per-surface
+  summary: >-
+    OAuth 2.1 + PKCE for MCP; Authorization: Bearer + Chord-User-Id header for the
+    Audiences API; X-Write-Key header for CDP ingest.
+  see: authentication/chord-commerce-authentication.yml
+idempotency:
+  supported: false
+  request_idempotency_key: false
+  header: null
+  description: >-
+    Chord does NOT accept an idempotency key on any of its endpoints, and states
+    plainly that the CDP "does not perform message-level deduplication within the
+    pipeline itself." Delivery is AT-LEAST-ONCE and duplicate suppression is
+    explicitly pushed to the destination.
+  correlation_key:
+    field: messageId
+    scope: event
+    stable: true
+    generated_when_absent: true
+    description: >-
+      Every event carries a messageId. If the source supplies one it is preserved
+      end-to-end and forwarded to every destination unchanged; if not, the CDP
+      generates one at ingest. This is the canonical key for deduplication,
+      tracing and correlation.
+  guidance_to_consumers: >-
+    Chord tells warehouse destinations to MERGE/UPSERT on messageId (per-connection
+    `deduplicate` + `primaryKey` options; ClickHouse uses ReplacingMergeTree), and
+    tells HTTP destinations to pass event.messageId as an Idempotency-Key header.
+    UDFs that perform external writes must be written idempotently for the same
+    reason.
+  docs: https://docs.chord.co/event-deduplication
+  assessment: >-
+    A documented dedup CONTRACT, not idempotent endpoints. An agent calling
+    /api/track twice will produce two events; there is no server-side key it can
+    present to prevent that. Recorded as unsupported rather than claimed.
+delivery:
+  guarantee: at-least-once
+  per_connection: true
+  description: >-
+    Each event is delivered independently per connection (source → destination
+    pairing); failing one destination does not affect any other.
+  docs: https://docs.chord.co/error-handling-and-retries
+retries:
+  retried:
+    - destination 5xx
+    - request timeout
+    - destination rate-limit response
+    - transient network error
+    - UDF RetryError
+  not_retried:
+    - malformed/unacceptable event data
+    - authentication failure at the destination
+    - UDF NoRetryError
+    - unexpected UDF logic error (event still delivered, monitors notified)
+    - intentional UDF filtering (return null/false/[]; recorded as `dropped`, no notification)
+  strategy: exponential-backoff
+  default_attempts: 3
+  base_interval: 10m
+  observed_schedule: ~10 minutes, then ~1.7 hours, then ~16.7 hours
+  max_delay: 24h
+  resume_semantics: >-
+    On retry only the failed stage and everything downstream re-runs — a delivery
+    failure re-attempts delivery without re-running earlier transformations.
+  dead_letter_queue: true
+  dlq_note: >-
+    Events that exhaust their retries move to a dead-letter queue rather than
+    being dropped; the move is recorded in pipeline metrics and surfaced to
+    connection monitors.
+  note: Chord states these are operational defaults that may be tuned per environment.
+pagination:
+  supported: null
+  note: >-
+    No pagination scheme is documented for any Chord API. The Audiences API
+    returns one user's audiences per request (keyed by the Chord-User-Id header),
+    so pagination does not arise there; the CDP ingest endpoints are write-only.
+field_expansion:
+  supported: false
+  note: >-
+    No expand/fields/sparse-fieldset parameter documented. The Audiences API does
+    support an arbitrary customer-shaped `data` object per audience, populated via
+    Liquid templating in the sync's field mapping — flexibility at CONFIGURATION
+    time, not at request time.
+metadata:
+  supported: true
+  description: >-
+    @chordcommerce/analytics requires a metadata block on every event:
+    metadata.i18n.currency (ISO 4217), metadata.i18n.locale,
+    metadata.ownership.omsId / storeId / tenantId (UUIDs assigned by Chord),
+    metadata.platform.name, metadata.platform.type (web|pos),
+    metadata.store.domain.
+  docs: https://docs.chord.co/analytics-developer-docs
+automatic_properties:
+  description: Properties the ingest layer adds to every event; overridable by the payload.
+  fields:
+    - timestamp
+    - requestIp
+    - context
+    - receivedAt
+    - messageId
+  docs: https://docs.chord.co/server-events-overview
+request_id_tracing:
+  header: null
+  note: >-
+    No request-id response header is documented. messageId is the event-level
+    correlation handle, and the Chord Console "Live Events" view is the documented
+    way to trace an individual event and its failures.
+versioning:
+  api_versioning: none
+  description: >-
+    No version segment, header or date-pinning on any Chord endpoint —
+    /api/track, /api/identify and /audiences are unversioned. The only versioned
+    artifacts are the npm SDK (semver, currently 1.23.1) and the CDN script's /v1/
+    path prefix.
+  see: lifecycle/chord-commerce-lifecycle.yml
+error_envelope:
+  shape: 'ad-hoc JSON: {"message": "<string>"}'
+  rfc9457: false
+  observed:
+    - status: 401
+      body: '{"message":"Unauthorized"}'
+      surface: https://analytics.api.chord.co/audiences
+    - status: 403
+      body: '{"message":"Missing Authentication Token"}'
+      surface: https://analytics.api.chord.co/ (AWS API Gateway default)
+    - status: 401
+      body: '{"error":"Invalid or missing bearer token"}'
+      surface: https://mcp.chord.co/mcp
+  note: >-
+    Two different key names across two surfaces (`message` vs `error`), neither
+    documented. No problem+json, no error code registry for the REST surfaces.
+  see: errors/chord-commerce-error-codes.yml
+rate_limit_signaling:
+  documented: false
+  headers: []
+  note: >-
+    No X-RateLimit-*/RateLimit-* headers and no published limits on any Chord API.
+    Chord handles rate limits it RECEIVES from destinations (treated as a
+    recoverable error and retried with backoff) but publishes none of its own.
+  see: rate-limits/chord-commerce-rate-limits.yml
+consent:
+  supported: true
+  description: >-
+    Consent filtering runs inside the pipeline — events lacking required consent
+    categories are dropped before delivery. Integrations documented for OneTrust
+    and the Shopify Customer Privacy API.
+  docs: https://docs.chord.co/consent-management

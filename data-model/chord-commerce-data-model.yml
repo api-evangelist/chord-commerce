@@ -1,0 +1,189 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.chord.co/oms-schema (primary), plus
+  https://docs.chord.co/chord-oms, https://docs.chord.co/data-models,
+  https://docs.chord.co/chord-data-attribute-definitions
+note: >-
+  Chord publishes no OpenAPI, so there are no $ref links to derive an entity
+  graph from. It does, however, publish a complete INGEST SCHEMA — "OMS Schema",
+  the specification a customer maps a non-Chord OMS onto — which names thirteen
+  entities, their primary keys, their required vs recommended vs optional fields,
+  and the foreign keys between them. That document is the real data model and is
+  the source for the graph below; relationships are read from the explicit
+  *_id reference fields it declares, not inferred. Field lists are abridged to
+  keys and reference fields; the full column list lives in the source document.
+  Chord models the warehouse on the Kimball approach (facts + dimensions), and
+  the analytics layer exposes these as "Explores".
+delivery:
+  format: parquet
+  file_layout: one file per data entity
+  timestamps: 'ISO 8601 (YYYY-MM-DDTHH:MM:SSZ)'
+  numerics: decimal notation, no currency symbols
+  booleans: lowercase true/false
+  strings: UTF-8, escaped
+  nulls: NULL, not empty string, for non-string fields
+entities:
+  - name: orders
+    primary_key: id
+    description: Transaction records including customer, pricing, status and addresses.
+    key_fields:
+      - id
+      - customer_id
+      - location_id
+      - name
+      - email
+      - source_name
+      - is_test
+      - discount_codes
+    field_groups:
+      - core
+      - financial
+      - status
+      - shipping_address
+      - billing_address
+      - timestamps
+    note: >-
+      Chord distinguishes CREATED orders (first created in the OMS) from
+      COMPLETED orders (closed or fully fulfilled) — the Orders explore holds all
+      orders regardless of status, the Sales explore only completed ones. This
+      distinction is the single most common source of a number that disagrees
+      with Shopify admin.
+  - name: customers
+    primary_key: id
+    description: Account and contact information.
+    key_fields:
+      - id
+      - email
+      - first_name
+      - last_name
+      - phone
+      - type
+      - has_verified_email
+    note: >-
+      first_name/last_name are marked "Recommended" specifically because omitting
+      them degrades Chord AI identity matching and predictive modeling.
+  - name: products
+    primary_key: id
+    description: Product catalog for all sellable items.
+    key_fields:
+      - id
+      - title
+  - name: product_variants
+    primary_key: id
+    key_fields:
+      - id
+      - product_id
+    note: >-
+      If the source system has no separate variant ids, Chord instructs the
+      customer to use product_id for both id and variant_id.
+  - name: order_line_items
+    primary_key: id
+    description: Individual items within each order.
+    key_fields:
+      - id
+      - order_id
+      - product_id
+      - variant_id
+      - subscription_id
+      - sku
+      - price
+      - quantity
+      - promo_total
+  - name: locations
+    primary_key: id
+    optional: true
+    description: Stores, warehouses and other fulfillment locations.
+  - name: payment_transactions
+    primary_key: id
+    description: Payment transaction records against an order.
+  - name: order_line_refunds
+    primary_key: id
+    description: Refunds at line-item granularity.
+  - name: return_line_items
+    primary_key: id
+    description: Returned line items.
+  - name: fulfillments
+    primary_key: id
+    optional: true
+  - name: fulfillment_order_lines
+    primary_key: id
+    optional: true
+  - name: fulfillment_orders
+    primary_key: id
+    optional: true
+  - name: subscription_history
+    primary_key: id
+    description: Subscription lifecycle history.
+relationships:
+  - from: orders
+    to: customers
+    type: belongs_to
+    via: customer_id
+  - from: orders
+    to: locations
+    type: belongs_to
+    via: location_id
+    optional: true
+  - from: order_line_items
+    to: orders
+    type: belongs_to
+    via: order_id
+  - from: order_line_items
+    to: products
+    type: belongs_to
+    via: product_id
+  - from: order_line_items
+    to: product_variants
+    type: belongs_to
+    via: variant_id
+  - from: order_line_items
+    to: subscription_history
+    type: belongs_to
+    via: subscription_id
+  - from: orders
+    to: order_line_items
+    type: has_many
+    via: order_id
+  - from: product_variants
+    to: products
+    type: belongs_to
+    via: product_id
+  - from: customers
+    to: orders
+    type: has_many
+    via: customer_id
+analytics_explores:
+  description: >-
+    The tables the analytics layer exposes to customers on Chord OMS, documented
+    one page each under docs.chord.co.
+  tables:
+    - Activities
+    - Ads
+    - Conversions
+    - Line Items
+    - Line Items By Units
+    - Marketing Attribution
+    - Orders
+    - Sales
+    - Sessions
+    - Stock Requests
+    - Subscription Events
+    - Subscriptions
+    - Transactions
+    - Users
+    - Variants
+  docs: https://docs.chord.co/chord-oms
+identity:
+  blended_user_id:
+    name: CDP Blended User ID
+    description: >-
+      Derived identifier that resolves to the CDP User ID when one exists and the
+      CDP Anonymous ID otherwise, so audiences can span known and unknown
+      visitors at one grain. Chord recommends it as the sync key and as the
+      Chord-User-Id value on the Audiences API.
+    docs: https://docs.chord.co/audiences-api
+  event_key:
+    name: messageId
+    description: Stable per-event identifier used for dedup, tracing and correlation.
+    see: conventions/chord-commerce-conventions.yml

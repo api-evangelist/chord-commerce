@@ -1,0 +1,158 @@
+generated: '2026-08-13'
+method: probed
+source: >-
+  live probes of mcp.chord.co and api.stytch.chord.co on 2026-08-13, plus
+  https://docs.chord.co/chord-mcp, https://docs.chord.co/chord-platform-and-okta-sso-integration,
+  https://docs.chord.co/consent-management,
+  https://www.chordcommerce.com/legal/security-measures
+note: >-
+  Chord has no OpenAPI to derive from, so every assertion below is either a live
+  probe of a discovery document or a direct statement in Chord's own docs.
+  Chord's standards posture is lopsided in an interesting way: the MCP/OAuth
+  surface is textbook-conformant to four current RFCs, while the two REST
+  surfaces conform to essentially nothing — no spec, no error standard, no
+  versioning, no rate-limit standard.
+standards:
+  - id: mcp
+    name: Model Context Protocol
+    conforms: true
+    evidence: >-
+      Hosted server at https://mcp.chord.co/mcp, declared
+      {"type":"streamable-http"} in Chord's own plugin manifest
+      (chord-copilot/plugin/.mcp.json); JSON-RPC 2.0 tools/list returns a
+      well-formed 401 with an RFC 9728 WWW-Authenticate challenge.
+    method: probed
+  - id: rfc9728-oauth-protected-resource
+    name: OAuth 2.0 Protected Resource Metadata
+    conforms: true
+    evidence: >-
+      GET https://mcp.chord.co/.well-known/oauth-protected-resource → 200 with
+      resource, authorization_servers[], bearer_methods_supported,
+      scopes_supported, resource_name. The 401 challenge names the
+      resource_metadata URL, which also resolves.
+    method: probed
+  - id: rfc8414-authorization-server-metadata
+    name: OAuth 2.0 Authorization Server Metadata
+    conforms: true
+    evidence: >-
+      GET https://mcp.chord.co/.well-known/oauth-authorization-server → 200 with
+      issuer, authorization_endpoint, token_endpoint, jwks_uri,
+      registration_endpoint, grant_types_supported, code_challenge_methods_supported.
+    method: probed
+  - id: oauth2
+    name: OAuth 2.0 / 2.1 authorization code
+    conforms: true
+    evidence: 'grant_types_supported: authorization_code, refresh_token, jwt-bearer'
+    method: probed
+  - id: pkce-rfc7636
+    name: PKCE
+    conforms: true
+    evidence: 'code_challenge_methods_supported: ["S256"] (S256 only — plain not offered)'
+    method: probed
+  - id: rfc7591-dynamic-client-registration
+    name: OAuth 2.0 Dynamic Client Registration
+    conforms: true
+    evidence: >-
+      registration_endpoint https://api.stytch.chord.co/v1/oauth2/register is
+      advertised, and Chord's docs instruct users to leave Client ID/Secret blank.
+    method: probed
+  - id: oidc
+    name: OpenID Connect Discovery 1.0
+    conforms: true
+    evidence: >-
+      GET https://api.stytch.chord.co/.well-known/openid-configuration → 200 with
+      issuer, userinfo_endpoint, jwks_uri and openid in scopes_supported.
+    method: probed
+  - id: saml2
+    name: SAML 2.0 SSO
+    conforms: true
+    evidence: >-
+      Documented Okta SAML 2.0 integration for console access to the Chord
+      Platform; Chord configures the connection from the customer's IdP metadata.
+    method: searched
+    note: Console SSO only. No SCIM provisioning endpoint is documented.
+  - id: llmstxt
+    name: llms.txt
+    conforms: true
+    evidence: 'https://docs.chord.co/llms.txt → 200, text/markdown, 273 linked .md pages'
+    method: probed
+  - id: openapi
+    name: OpenAPI
+    conforms: false
+    evidence: >-
+      No OpenAPI/Swagger document at any candidate path on chordcommerce.com,
+      docs.chord.co, analytics.api.chord.co, production.cdp.ingest.chord.co,
+      mcp.chord.co or chord.stoplight.io. The former Stoplight OMS reference now
+      404s.
+    method: probed
+  - id: asyncapi
+    name: AsyncAPI
+    conforms: false
+    evidence: >-
+      No AsyncAPI document published, despite a fully documented canonical event
+      catalog that would map onto one almost directly.
+    method: probed
+  - id: a2a
+    name: A2A Agent Card
+    conforms: false
+    evidence: >-
+      /.well-known/agent-card.json and /.well-known/agent.json return 404 on
+      every Chord host.
+    method: probed
+  - id: rfc9457-problem-details
+    name: RFC 9457 Problem Details
+    conforms: false
+    evidence: >-
+      Error bodies are ad-hoc — {"message":"Unauthorized"} on the REST surface and
+      {"error":"Invalid or missing bearer token"} on MCP. No application/problem+json.
+    method: probed
+  - id: rfc9116-security-txt
+    name: security.txt
+    conforms: false
+    evidence: /.well-known/security.txt returns 404 on every Chord host.
+    method: probed
+  - id: rfc8594-sunset-header
+    name: Sunset / Deprecation headers
+    conforms: false
+    evidence: No deprecation policy or header support documented anywhere.
+    method: searched
+  - id: ratelimit-headers
+    name: IETF RateLimit header fields
+    conforms: false
+    evidence: No rate limits and no rate-limit headers published on any surface.
+    method: searched
+  - id: iso4217
+    name: ISO 4217 currency codes
+    conforms: true
+    evidence: >-
+      metadata.i18n.currency is required by @chordcommerce/analytics and must be
+      an uppercase ISO 4217 code.
+    method: searched
+  - id: bcp47
+    name: BCP 47 locale tags
+    conforms: true
+    evidence: 'metadata.i18n.locale required, documented in the form en-US'
+    method: searched
+  - id: gdpr-consent
+    name: Consent enforcement (GDPR/CCPA tooling)
+    conforms: true
+    evidence: >-
+      Consent filtering is a pipeline stage that drops events lacking required
+      consent categories; documented integrations with OneTrust and the Shopify
+      Customer Privacy API. A Data Processing Addendum and a subprocessor list are
+      published at chordcommerce.com/legal/.
+    method: searched
+    note: >-
+      This is published PRIVACY TOOLING, not an audited certification — see
+      certifications below.
+certifications:
+  published: []
+  note: >-
+    Chord publishes a Security Measures addendum
+    (chordcommerce.com/legal/security-measures, last updated 2024-07-29) that
+    describes controls in prose — access control, encryption in transit and at
+    rest, password policy, logging, change management, incident response, network
+    controls, vulnerability management, business continuity. It names NO
+    certification: no SOC 2, no ISO 27001, no PCI DSS, no HIPAA, no FedRAMP, and
+    there is no trust center. A targeted search for a Chord SOC 2 report returned
+    nothing. No `Compliance` pointer is emitted, because none is earned.

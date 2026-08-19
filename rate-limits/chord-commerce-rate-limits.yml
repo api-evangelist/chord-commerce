@@ -1,0 +1,55 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.chord.co/server-events-overview, https://docs.chord.co/audiences-api,
+  https://docs.chord.co/error-handling-and-retries, https://docs.chord.co/chord-mcp
+limit_count: 0
+headers_published: []
+retry_after: unknown
+status_on_exhaustion: unknown
+note: >-
+  Chord publishes NO rate limits for any of its three API surfaces. There is no
+  limits page, no per-key/per-account quota, no burst allowance, and no
+  X-RateLimit-*/RateLimit-*/Retry-After header documented for /api/track,
+  /api/identify, /audiences or the MCP endpoint. An agent integrating with Chord
+  therefore has no runtime signal to back off on and no documented ceiling to
+  design against — it can only observe failures.
+  The one place rate limiting IS documented is the opposite direction: when a
+  DESTINATION rate-limits Chord, Chord classifies that as a recoverable error and
+  re-queues the event with exponential backoff (3 attempts, 10-minute base,
+  capped at 24 hours), then dead-letters it. That is Chord consuming someone
+  else's limit, not publishing its own.
+limits: []
+related_backoff_behavior:
+  applies_to: outbound delivery from Chord to a destination
+  trigger: destination 5xx, timeout, rate-limit response, or network error
+  strategy: exponential-backoff
+  attempts: 3
+  base_interval: 10m
+  observed_schedule: ~10 minutes, then ~1.7 hours, then ~16.7 hours
+  max_delay: 24h
+  terminal: dead-letter queue
+  docs: https://docs.chord.co/error-handling-and-retries
+observed:
+  - surface: https://docs.chord.co/*.md
+    status: 429
+    method: probed
+    checked: '2026-08-13'
+    note: >-
+      The Archbee-hosted DOCUMENTATION site returned HTTP 429 Too Many Requests
+      when 273 markdown pages were fetched with 8 concurrent workers; serializing
+      at ~0.35s between requests cleared it. This is a docs-host protection, is
+      undocumented, and is NOT an API rate limit — recorded so the observation is
+      not mistaken for one.
+  - surface: https://analytics.api.chord.co/audiences
+    status: 401
+    method: probed
+    checked: '2026-08-13'
+    note: >-
+      Unauthenticated request rejected before any limit could be observed. No
+      rate-limit headers present on the 401 response.
+  - surface: https://mcp.chord.co/mcp
+    status: 401
+    method: probed
+    checked: '2026-08-13'
+    note: No rate-limit headers on the 401 challenge response.

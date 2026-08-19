@@ -1,0 +1,31 @@
+generated: '2026-08-13'
+method: searched
+source: https://www.chordcommerce.com/pricing
+docs: https://www.chordcommerce.com/request-a-demo
+plan_count: 0
+pricing_model: sales-led
+public_pricing: false
+free_tier: false
+trial: false
+self_service_signup: false
+note: >-
+  Chord publishes no plans, no tiers and no prices. https://chordcommerce.com/pricing
+  is not a pricing page — it 301s to https://chordcommerce.com/request-a-demo, a
+  lead form ("Speak to an expert"). Nothing on the site, in the docs, or in the
+  terms of service names a price, a quota, an overage rate or a usage unit, and
+  there is no machine-readable pricing or catalog endpoint. API access itself is
+  gated the same way: the Audiences API is enabled per account by Chord staff,
+  and its bearer token is issued on request via help@chord.co or an account
+  executive. plan_count: 0 is the finding, not a gap in this pass.
+evidence:
+  - url: https://www.chordcommerce.com/pricing
+    status: 301
+    redirects_to: https://chordcommerce.com/request-a-demo
+    checked: '2026-08-13'
+  - url: https://chordcommerce.com/request-a-demo
+    status: 200
+    content: demo request form, no prices
+    checked: '2026-08-13'
+plans: []
+quotas_published: []
+overage_published: []

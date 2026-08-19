@@ -1,0 +1,111 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.chord.co/error-handling-and-retries,
+  https://docs.chord.co/event-deduplication, plus live unauthenticated probes of
+  the three Chord API hosts on 2026-08-13
+format: ad-hoc
+rfc9457: false
+note: >-
+  Chord publishes no numbered error registry and no OpenAPI, so there are no
+  4xx/5xx response schemas to derive from. What Chord DOES publish is a failure
+  TAXONOMY for the event pipeline — recoverable vs unrecoverable, what is
+  retried, and where a permanently failed event ends up. That taxonomy is
+  captured here as the error catalog, alongside the HTTP error bodies actually
+  observed on the wire.
+envelope:
+  rest: '{"message": "<string>"}'
+  mcp: '{"error": "<string>"}'
+  note: >-
+    Inconsistent key across surfaces and undocumented in both cases. No error
+    code, no type URI, no request id, no remediation link in any body.
+http_errors:
+  - status: 401
+    surface: https://analytics.api.chord.co/audiences
+    body: '{"message":"Unauthorized"}'
+    meaning: Missing or invalid bearer token on the Audiences API.
+    remediation: >-
+      Send Authorization: Bearer <key> plus the Chord-User-Id header. Keys are
+      issued by Chord (help@chord.co); there is no self-service console.
+    method: probed
+  - status: 403
+    surface: https://analytics.api.chord.co/ (and any unmapped path)
+    body: '{"message":"Missing Authentication Token"}'
+    meaning: >-
+      AWS API Gateway's default for an unmatched route. Note this is a ROUTING
+      miss dressed as an auth failure — a 403 here does not mean the credential
+      was wrong, it means the path does not exist.
+    remediation: Check the path; only /audiences is documented.
+    method: probed
+  - status: 401
+    surface: https://mcp.chord.co/mcp
+    body: '{"error":"Invalid or missing bearer token"}'
+    meaning: MCP request without a valid OAuth access token.
+    remediation: >-
+      Follow the WWW-Authenticate challenge to
+      /.well-known/oauth-protected-resource/mcp, register dynamically at
+      api.stytch.chord.co/v1/oauth2/register, and complete the authorization_code
+      + PKCE flow.
+    method: probed
+  - status: 429
+    surface: https://docs.chord.co/*.md
+    body: HTTP 429 Too Many Requests
+    meaning: >-
+      Observed on the Archbee-hosted DOCS site when fetching many markdown pages
+      concurrently. This is a docs-host protection, not a Chord API limit, and it
+      is undocumented.
+    remediation: Serialize documentation fetches; ~0.35s between requests cleared it.
+    method: probed
+pipeline_error_classes:
+  - id: transient-delivery-failure
+    source: destination
+    examples:
+      - destination returned 5xx
+      - request timeout
+      - destination rate-limit response
+      - network error
+    retried: true
+    result: Re-queued with exponential backoff; delivered once the destination recovers.
+  - id: function-recoverable-failure
+    source: 'UDF (RetryError)'
+    retried: true
+    result: Re-queued with backoff.
+  - id: unrecoverable-data-error
+    source: 'destination or UDF (NoRetryError)'
+    examples:
+      - malformed event data the destination will never accept
+      - authentication failure at the destination
+    retried: false
+    result: Event dropped, connection monitors notified.
+  - id: unexpected-logic-error
+    source: 'UDF (standard Error)'
+    retried: false
+    result: Event still delivered, monitors notified.
+  - id: intentional-filtering
+    source: 'UDF returning null / false / []'
+    retried: false
+    result: Event silently dropped, recorded as `dropped`, no notification.
+    note: Treated as normal pipeline behaviour, not a failure.
+terminal_state:
+  dead_letter_queue: true
+  description: >-
+    After the retry attempts are exhausted the event moves to a dead-letter queue
+    rather than being retried forever or silently discarded. The move is recorded
+    in pipeline metrics and surfaced to configured connection monitors, and the
+    event is preserved for inspection and manual replay.
+observability:
+  live_events: >-
+    Individual failures and their causes are inspectable in Live Events in the
+    Chord Console.
+  alerts: >-
+    CDP Event Alerts notify by EMAIL when a source stops receiving events or a
+    destination stops receiving deliveries for a configurable window; at most one
+    notification per source/connection per 24 hours, and no resolution notice.
+    There is no webhook or API delivery for these alerts, and no monitoring for
+    volume spikes/drops.
+  docs: https://docs.chord.co/cdp-notifications-event-alerts
+gaps:
+  - No numbered/typed error code registry for any surface.
+  - No application/problem+json (RFC 9457) anywhere.
+  - No documented error response shapes for /api/track, /api/identify or /audiences.
+  - No request id echoed in error bodies or headers to quote in a support ticket.

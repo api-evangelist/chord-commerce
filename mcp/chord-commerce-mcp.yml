@@ -1,0 +1,154 @@
+generated: '2026-08-13'
+method: searched
+status: published
+source: https://docs.chord.co/chord-mcp
+sources:
+  - https://docs.chord.co/chord-mcp
+  - https://github.com/chordcommerce/chord-copilot/blob/main/plugin/.mcp.json
+  - https://mcp.chord.co/.well-known/oauth-protected-resource
+server:
+  name: chord-copilot
+  display_name: Chord MCP
+  description: >-
+    Chord's hosted MCP server. Gives an MCP client a read-only window into the
+    customer's Chord data warehouse: schema search, saved views, prior
+    question/SQL pairs, org SQL conventions, table preview, read-only SQL
+    execution, and multi-tenant routing across the Chord organizations the
+    authenticated user belongs to.
+  transport: streamable-http
+  url: https://mcp.chord.co/mcp
+deployment:
+  mode: remote
+  endpoint: https://mcp.chord.co/mcp
+  auth: oauth
+  verified: probed
+  note: >-
+    Remote-only. Chord publishes a Claude Code plugin
+    (github.com/chordcommerce/chord-copilot) and a one-line install.sh, but both
+    only register the SAME hosted URL — the plugin's .mcp.json declares
+    {"type":"streamable-http","url":"https://mcp.chord.co/mcp"} and the
+    config-file path shells out to the generic third-party `mcp-remote` bridge
+    (`npx -y mcp-remote https://mcp.chord.co/mcp`). Chord ships no stdio server
+    package of its own, so this is `remote`, not `both`.
+authentication:
+  type: oauth2
+  flow: authorization_code
+  pkce: S256
+  dynamic_client_registration: true
+  issuer: https://api.stytch.chord.co
+  authorization_endpoint: https://hub-backend.chord.co/oauth/authorize
+  token_endpoint: https://api.stytch.chord.co/v1/oauth2/token
+  registration_endpoint: https://api.stytch.chord.co/v1/oauth2/register
+  scopes:
+    - openid
+    - profile
+    - email
+    - offline_access
+  challenge: >-
+    An unauthenticated POST to https://mcp.chord.co/mcp returns HTTP 401 with
+    WWW-Authenticate: Bearer resource_metadata="https://mcp.chord.co/.well-known/oauth-protected-resource/mcp"
+  see: authentication/chord-commerce-authentication.yml
+x-evidence:
+  fetched: '2026-08-13'
+  probe: POST https://mcp.chord.co/mcp {"jsonrpc":"2.0","id":1,"method":"tools/list"}
+  http_status: 401
+  body: '{"error":"Invalid or missing bearer token"}'
+  note: >-
+    tools/list is auth-gated, so the live inputSchema for each tool could not be
+    read anonymously. The tool names and behaviours below are NOT guessed — they
+    are transcribed from Chord's OWN published Agent Skills
+    (github.com/chordcommerce/chord-copilot/plugin/skills/*/SKILL.md) and the
+    capability table in docs.chord.co/chord-mcp. Input schemas require an
+    authenticated introspection pass.
+tools:
+  - name: search_schema
+    description: Discover which tables exist in the warehouse and what they contain. First stop for any data question.
+    category: discovery
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: search_saved_views
+    description: Check whether a user-blessed canonical query already answers the question.
+    category: discovery
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: search_sql_pairs
+    description: Find past question/SQL pairs resembling the user's question, for few-shot grounding.
+    category: discovery
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: search_instructions
+    description: >-
+      Pull always-apply SQL guidance stored by the org (filters, joins, casing
+      rules, revenue/COGS conventions, test-order exclusion).
+    category: governance
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: search_documentation
+    description: Answer "how do I…" questions about the Chord Copilot product itself (global, not project-scoped).
+    category: documentation
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: preview_table
+    description: Peek at a handful of rows from a known table. Capped at 100 rows.
+    category: data
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: execute_sql
+    description: >-
+      Run a read-only query (SELECT/UNION/INTERSECT/EXCEPT only, capped at 10000
+      rows). Accepts validate_only=True to parse-check without executing.
+    category: data
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: ask
+    description: Natural-language question answered end to end against the warehouse.
+    category: data
+    source: chord-copilot/plugin/skills/metric-verify/SKILL.md
+  - name: list_tenants
+    description: >-
+      List the Chord organizations the authenticated user can reach. Returns
+      [{name, slug, current}]; `current` marks the tenant requests route to.
+    category: tenancy
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: switch_tenant
+    description: >-
+      Change which tenant subsequent calls route to. Takes `slug`; rejected when
+      the caller is not a member. Routing sticks for the session, no re-auth.
+    category: tenancy
+    source: chord-copilot/plugin/skills/copilot/SKILL.md
+  - name: list_data_sources
+    description: List the CDP sources feeding the warehouse.
+    category: activation
+    source: chord-copilot/plugin/skills/activation-health/SKILL.md
+  - name: list_audience_syncs
+    description: List audience syncs and their state (active / errored / paused).
+    category: activation
+    source: chord-copilot/plugin/skills/activation-health/SKILL.md
+  - name: get_sync_run_history
+    description: Return run history for a sync, including last successful run and error detail.
+    category: activation
+    source: chord-copilot/plugin/skills/activation-health/SKILL.md
+  - name: get_activation_summary
+    description: Summarize destinations connected and overall activation health.
+    category: activation
+    source: chord-copilot/plugin/skills/activation-health/SKILL.md
+constraints:
+  read_only: true
+  sql_statements_allowed:
+    - SELECT
+    - UNION
+    - INTERSECT
+    - EXCEPT
+  max_rows_execute_sql: 10000
+  max_rows_preview_table: 100
+  tenancy: >-
+    Every tool targets the CURRENT tenant's warehouse; the tenant is never passed
+    per call. Use list_tenants / switch_tenant to change routing.
+clients:
+  - name: Claude (Custom Connectors)
+    setup: Settings → Connectors → Add custom connector → https://mcp.chord.co/mcp
+    note: Team/Enterprise plans require an org Owner to add the connector.
+  - name: Claude Desktop (config file)
+    setup: 'npx -y mcp-remote https://mcp.chord.co/mcp'
+    note: >-
+      Generic third-party bridge to the same hosted endpoint. Chord's install.sh
+      (raw.githubusercontent.com/chordcommerce/chord-copilot/main/install.sh)
+      merges this entry into claude_desktop_config.json.
+  - name: Claude Code plugin
+    setup: 'github.com/chordcommerce/chord-copilot (marketplace: chord, plugin: chord)'
+    note: Registers the server and installs four Chord-authored Agent Skills; see skills/.
+skills: skills/_index.yml
+support: help@chord.co

@@ -1,0 +1,169 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.chord.co/tracking-plan, https://docs.chord.co/track,
+  https://docs.chord.co/server-events-overview,
+  https://docs.chord.co/server-event-tracking,
+  https://docs.chord.co/chord-event-tracking
+asyncapi_published: false
+note: >-
+  Chord publishes NO AsyncAPI document — /asyncapi.yaml and /asyncapi.json miss on
+  every host and nothing in the GitHub org carries one, so nothing is fabricated
+  here. What Chord DOES publish is a complete, named, versionless EVENT CATALOG:
+  a canonical tracking plan for browser events and a server-side event taxonomy,
+  both delivered over an HTTP ingest endpoint that Chord's own docs describe as
+  the place "for backend systems to send ad-hoc events or webhooks". The
+  direction matters and is stated plainly below: this is an INBOUND event/webhook
+  RECEIVER. Chord does not send outbound webhooks to customer endpoints — the
+  only Chord-originated notifications are EMAIL alerts, and destination delivery
+  goes to configured third-party platforms, not to a customer callback URL.
+direction: inbound
+transport: https
+ingest:
+  - channel: track
+    endpoint: https://production.cdp.ingest.chord.co/api/track
+    method: POST
+    description: Behavioural and transactional events during the purchase journey.
+    required_payload:
+      - name: type
+        type: string
+        required: true
+        const: track
+      - name: event
+        type: string
+        required: true
+        description: 'Event name, e.g. "Order Completed"'
+      - name: userId
+        type: string
+        required: false
+        description: Identified user id (or email address)
+      - name: anonymousId
+        type: string
+        required: false
+        description: Unidentified visitor id
+  - channel: identify
+    endpoint: https://production.cdp.ingest.chord.co/api/identify
+    method: POST
+    description: Associate a user with their traits after signup, login, or form submission.
+authentication:
+  preferred:
+    in: header
+    name: X-Write-Key
+  alternatives:
+    - in: query
+      name: writekey
+    - in: body
+      name: writeKey
+  see: authentication/chord-commerce-authentication.yml
+automatic_properties:
+  description: Added by ingest to every event; overridable by the payload.
+  fields:
+    - timestamp
+    - requestIp
+    - context
+    - receivedAt
+    - messageId
+delivery_semantics:
+  guarantee: at-least-once
+  dedup_key: messageId
+  pipeline_dedup: false
+  see: conventions/chord-commerce-conventions.yml
+server_events:
+  description: >-
+    Server-originated track events. Documented per event with their own payload
+    pages under docs.chord.co/track.
+  groups:
+    - name: Order
+      events:
+        - Order Canceled
+        - Order Completed
+        - Order Refunded
+    - name: Shipment
+      events:
+        - Shipment Delivered
+        - Shipment Shipped
+    - name: Subscription
+      events:
+        - Subscription Auto-Renewed
+        - Subscription Created
+        - Subscription Expired
+        - Subscription Order Skipped
+        - Subscription Paused
+        - Subscription Payment Failed
+        - Subscription Reminder Sent
+        - Subscription Resumed
+    - name: User
+      events:
+        - User Created
+client_events:
+  docs: https://docs.chord.co/tracking-plan
+  sdk: '@chordcommerce/analytics'
+  core:
+    - Cart Viewed
+    - Checkout Started
+    - Order Completed
+    - Product Added
+  basic_conversion_journey:
+    - Cart Viewed
+    - Checkout Started
+    - Consent Preferences Updated
+    - Coupon Applied
+    - Coupon Denied
+    - Coupon Entered
+    - Coupon Removed
+    - Email Captured
+    - Order Completed
+    - Order Refunded
+    - Product Added
+    - Product Clicked
+    - Product List Filtered
+    - Product List Viewed
+    - Product Removed
+    - Product Viewed
+    - Products Searched
+    - Signed In
+    - Signed Out
+    - Signed Up
+  expanded_conversion_journey:
+    - Cart Shared
+    - Product Added to Wishlist
+    - Product Removed from Wishlist
+    - Product Reviewed
+    - Product Shared
+    - Promotion Clicked
+    - Promotion Viewed
+    - Wishlist Product Added to Cart
+  validation:
+    enforced: false
+    note: >-
+      Chord states the tracking plan is "a convention, not a schema validator" —
+      no component in ingest, Rotor, or the destination functions checks an
+      incoming event against the plan or blocks it. Custom events and canonical
+      events with non-standard properties flow through the same pipeline
+      unmodified. The SDK's optional debug:true flag validates client-side only.
+webhook_integration:
+  inbound_from_shopify:
+    description: >-
+      Chord provisions a "Shopify Webhooks" CDP source and instructs the customer
+      to create Shopify webhook subscriptions pointing at that source's URL.
+    topics:
+      - topic: checkouts/create
+        emits: Checkout Created
+      - topic: orders/create
+        emits: Order Completed
+      - topic: refunds/create
+        emits: Order Refunded
+    required_shopify_scope: read_orders
+    docs: https://docs.chord.co/server-event-tracking
+    note: >-
+      The webhook URL is per-workspace and issued by Chord; it is not a public,
+      documented endpoint.
+outbound_webhooks:
+  supported: false
+  note: >-
+    Chord sends no webhooks to customer-owned endpoints. CDP Event Alerts (source
+    silent for N hours, destination not receiving deliveries) are EMAIL only, at
+    most one per source/connection per 24 hours, with no resolution notice and no
+    API. Event delivery goes to configured third-party destinations via
+    Chord-maintained destination functions, not to arbitrary customer callbacks.
+    docs: https://docs.chord.co/cdp-notifications-event-alerts

@@ -1,0 +1,94 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://status.chord.co, https://status.chord.co/api/v2/summary.json,
+  https://chord.launchnotes.io, https://docs.chord.co/chordcommerceanalytics,
+  https://www.chordcommerce.com/legal/terms-of-service
+versioning:
+  scheme: none
+  current: null
+  docs: null
+  note: >-
+    No API versioning of any kind. /api/track, /api/identify and /audiences carry
+    no version segment, no version header and no date pinning. The only versioned
+    surfaces Chord ships are the npm SDK @chordcommerce/analytics (semver, 1.23.1
+    as of 2026-08-10) and the /v1/ path on the CDN identifier script.
+deprecation:
+  policy_url: null
+  policy_published: false
+  sunset_header: unknown
+  deprecation_header: unknown
+  note: >-
+    No deprecation policy, no notice period, and no RFC 8594 Sunset/Deprecation
+    header support is documented anywhere on chordcommerce.com or docs.chord.co.
+    Observed deprecations are announced only as prose in the release notes — the
+    2026-08-06 entry retiring the "Copilot" name in favour of "Ask Chord" is the
+    current example, and it names no cutover date for any API-visible identifier.
+    Recorded as absent; NO Deprecation pointer is emitted.
+status_page:
+  url: https://status.chord.co
+  platform: Atlassian Statuspage
+  page_id: t7cgm6rk9g0n
+  machine_readable:
+    - https://status.chord.co/api/v2/status.json
+    - https://status.chord.co/api/v2/summary.json
+    - https://status.chord.co/history.rss
+  components:
+    first_party:
+      - API
+      - OMS
+      - Hub
+      - Chord CDP
+      - Data Pipeline
+      - Website
+      - Documentation
+      - Staging OMS Admin + API
+      - Staging Data Pipelines
+    third_party_tracked:
+      - Segment
+      - Shopify
+      - Contentful
+      - Netlify
+      - Stripe
+      - Snowflake
+      - AWS (us-east-1)
+      - Anthropic Claude
+  note: >-
+    Unusually transparent: Chord republishes the status of every upstream it
+    depends on, including Anthropic's Claude API — the model layer behind Chord
+    AI — and its own staging environment. Read live 2026-08-13; overall indicator
+    was `minor` solely because of an upstream Claude partial outage, with all
+    nine first-party components operational.
+  method: probed
+sla:
+  url: null
+  uptime_target: null
+  note: >-
+    No public SLA or uptime commitment. Terms of Service are at
+    chordcommerce.com/legal/terms-of-service; any availability commitment sits in
+    the private enterprise agreement.
+release_notes:
+  url: https://chord.launchnotes.io
+  platform: LaunchNotes
+  cadence: fortnightly release-notes posts plus ad-hoc feature announcements
+  feed: null
+  note: RSS/Atom probes (/rss, /feed.rss) return 404; the page is JS-rendered.
+  see: changelog/chord-commerce-changelog.yml
+sdk_release_notes:
+  url: https://docs.chord.co/chordcommerceanalytics
+  scope: '@chordcommerce/analytics'
+deprecated_operations: []
+retired_surfaces:
+  - name: Chord OMS API reference (Stoplight)
+    url: https://chord.stoplight.io/docs/chord-oms
+    status: 404
+    observed: '2026-08-13'
+    note: >-
+      The Stoplight-hosted OMS API reference that apis.yml previously pointed at
+      no longer resolves — the workspace root chord.stoplight.io still returns
+      200 and the project title "Chord OMS" is still rendered, but every /docs/
+      path under it 404s and the workspace API answers no project. The OMS
+      surface that remains on docs.chord.co is warehouse TABLE documentation, not
+      an HTTP API reference. The apis.yml APIReference pointer has been moved to
+      the live SDK API reference; this dead URL is recorded here rather than
+      being silently dropped.
