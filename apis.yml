@@ -64,6 +64,24 @@ tags:
   - Commerce Copilot
   - Solidus
   - Spree
+  - Ruby on Rails
+  - Shopify
+  - Direct to Consumer
+tags_raw:
+  - Commerce
+  - Composable Commerce
+  - Headless Commerce
+  - Order Management
+  - OMS
+  - Customer Data Platform
+  - CDP
+  - Event Tracking
+  - Commerce Analytics
+  - Customer Lifetime Value
+  - AI Agents
+  - Commerce Copilot
+  - Solidus
+  - Spree
   - Ruby On Rails
   - Shopify
   - DTC
@@ -118,6 +136,11 @@ apis:
     humanURL: https://docs.chord.co/server-events-overview
     baseURL: https://production.cdp.ingest.chord.co
     tags:
+      - Event Tracking
+      - CDP
+      - Customer Data Platform
+      - Event
+    tags_raw:
       - Event Tracking
       - CDP
       - Customer Data Platform
