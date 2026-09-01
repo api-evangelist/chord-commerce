@@ -76,9 +76,8 @@ tags:
   - Commerce Copilot
   - Solidus
   - Spree
-  - Ruby On Rails
+  - Ruby on Rails
   - Shopify
-  - DTC
   - Direct to Consumer
 tags_raw:
   - Commerce
@@ -190,6 +189,9 @@ apis:
       - type: ErrorCatalog
         url: errors/chord-commerce-error-codes.yml
 common:
+  - type: License
+    name: MIT
+    url: https://github.com/chordcommerce/chord-copilot/blob/main/LICENSE
   - type: DomainSecurity
     url: security/chord-commerce-domain-security.yml
   - type: Website
